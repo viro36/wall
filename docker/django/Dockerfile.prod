@@ -56,4 +56,4 @@ RUN sed -i 's/\r$//g' /start && \
     sed -i 's/\r$//g' /start-flower && \
     chmod +x /start /start-prod /start-celeryworker /start-flower
 
-LABEL description="Production image for the witwall django"
+LABEL description="Production image for the wall django"

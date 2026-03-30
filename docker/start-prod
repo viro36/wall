@@ -37,7 +37,7 @@ python manage.py migrate --noinput
 echo "Database is ready"
 
 # Запускаем gunicorn с оптимизированными настройками
-exec gunicorn witwall.wsgi:application \
+exec gunicorn wall.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 4 \
     --worker-class sync \
