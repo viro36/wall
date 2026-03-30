@@ -1,0 +1,77 @@
+/* Стили для CKEditor */
+.django_ckeditor_5 {
+    width: 100%;
+    min-height: 200px;
+}
+
+.ck-editor__editable {
+    min-height: 200px !important;
+}
+
+/* Остальные стили */
+#suggestion-form-container .card-header {
+    border-radius: 8px 8px 0 0;
+}
+
+#suggestion-form-container .required-field label::after {
+    content: " *";
+    color: red;
+    font-weight: bold;
+}
+
+#suggestion-form-container .help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+#suggestion-form-container .char-counter {
+    font-size: 0.8rem;
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+#suggestion-form-container .char-counter.warning {
+    color: #ffc107;
+}
+
+#suggestion-form-container .char-counter.danger {
+    color: #dc3545;
+}
+
+/* Индикаторы загрузки */
+#suggestion-district-indicator,
+#suggestion-type-indicator {
+    transition: opacity 0.3s ease;
+}
+
+.htmx-indicator {
+    opacity: 0;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--bs-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    #suggestion-form-container .card-body {
+        padding: 1rem;
+    }
+}

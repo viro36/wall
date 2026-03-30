@@ -1,0 +1,154 @@
+{% load static %}
+{% load django_bootstrap5 %}
+
+<div class="card mb-4" id="suggestion-form-container">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="fa-solid fa-lightbulb me-2"></i>
+            Новое предложение
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post"
+              action="{% url 'api-question-suggestions' question.id %}"
+              enctype="multipart/form-data"
+              novalidate
+              hx-post="{% url 'api-question-suggestions' question.id %}"
+              hx-target="#suggestions-list"
+              hx-swap="afterbegin"
+            >
+            {% csrf_token %}
+
+            <!-- Подключаем JS/CSS для CKEditor -->
+            {{ form.media }}
+
+            <!-- Основная информация -->
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    {% bootstrap_field form.author_name %}
+                    <div class="help-text">
+                        <i class="fa-solid fa-info-circle me-1"></i>
+                        Будет отображаться как автор предложения
+                    </div>
+                </div>
+            </div>
+
+            <!-- Скрытое поле для организации -->
+            <input type="hidden" name="organization" id="id_organization_selected" value="">
+
+            <!-- Выбор организации (опционально) -->
+            <div class="card mb-4 bg-light">
+                <div class="card-header">
+                    <i class="fa-solid fa-building me-2"></i>
+                    К какой организации относится предложение? (необязательно)
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Район - используем стандартный ID как в вопросе -->
+                        <div class="col-md-4 mb-3">
+                            <label for="id_district" class="form-label">
+                                Район
+                            </label>
+                            <div class="d-flex align-items-center">
+                                <select name="district"
+                                        id="id_district"
+                                        class="form-select"
+                                        hx-get="/api/get-organization-types-html/"
+                                        hx-target="#id_organization_type_container"
+                                        hx-trigger="change"
+                                        hx-indicator="#district-indicator"
+                                        hx-swap="innerHTML">
+                                    <option value="">---------</option>
+                                    {% for district in districts %}
+                                        <option value="{{ district.id }}">{{ district.short_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span id="district-indicator" class="htmx-indicator ms-2">
+                                    <span class="loading-spinner"></span>
+                                </span>
+                            </div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle me-1"></i>
+                                Выберите район
+                            </div>
+                        </div>
+
+                        <!-- Тип организации - используем стандартные ID -->
+                        <div class="col-md-4 mb-3">
+                            <label for="id_organization_type" class="form-label">
+                                Тип организации
+                            </label>
+                            <div id="id_organization_type_container">
+                                <select name="organization_type"
+                                        id="id_organization_type"
+                                        class="form-select"
+                                        disabled
+                                        hx-get="/api/get-organizations-html/"
+                                        hx-target="#id_organization_container"
+                                        hx-trigger="change"
+                                        hx-indicator="#type-indicator"
+                                        hx-swap="innerHTML"
+                                        hx-include="#id_district">
+                                    <option value="">---------</option>
+                                </select>
+                            </div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle me-1"></i>
+                                Сначала выберите район
+                            </div>
+                        </div>
+
+                        <!-- Организация - используем стандартные ID -->
+                        <div class="col-md-4 mb-3">
+                            <label for="id_organization_container" class="form-label">
+                                Организация
+                            </label>
+                            <div id="id_organization_container">
+                                <select name="organization_select"
+                                        id="id_organization"
+                                        class="form-select"
+                                        disabled
+                                        onchange="document.getElementById('id_organization_selected').value = this.value">
+                                    <option value="">---------</option>
+                                </select>
+                            </div>
+                            <span id="type-indicator" class="htmx-indicator ms-2">
+                                <span class="loading-spinner"></span>
+                            </span>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle me-1"></i>
+                                Выберите организацию (необязательно)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Текст предложения с CKEditor -->
+            <div class="mb-3">
+                {% bootstrap_field form.content %}
+                <div class="d-flex justify-content-between">
+                    <div class="help-text">
+                        <i class="fa-solid fa-info-circle me-1"></i>
+                        Опишите ваше предложение подробно
+                    </div>
+                    <div class="char-counter" id="suggestion-content-counter">0/5000</div>
+                </div>
+            </div>
+
+            <!-- Кнопки -->
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#addSuggestionForm">
+                    <i class="fa-solid fa-times me-2"></i>
+                    Отмена
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-paper-plane me-2"></i>
+                    Опубликовать предложение
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

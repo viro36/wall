@@ -1,0 +1,122 @@
+{% load static %}
+<div class="suggestion-card {% if suggestion.is_best %}best{% endif %}" id="suggestion-{{ suggestion.id }}">
+    {% if suggestion.is_best %}
+    <div class="best-badge">
+        <i class="fa-solid fa-crown me-1"></i>Лучшее предложение
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <strong class="text-primary">{{ suggestion.author_name }}</strong>
+            <small class="text-muted ms-2">{{ suggestion.created_at|date:"d.m.Y H:i" }}</small>
+        </div>
+        <div class="vote-buttons">
+            <button class="vote-btn like-btn"
+                    hx-post="{% url 'api-suggestion-vote' suggestion.id %}"
+                    hx-vals='{"vote": 1}'
+                    hx-target="#suggestion-{{ suggestion.id }} .vote-stats"
+                    hx-swap="outerHTML"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                <i class="fa-solid fa-thumbs-up"></i>
+            </button>
+            <span class="vote-stats" id="vote-stats-{{ suggestion.id }}">
+                <span class="vote-count likes-count" id="likes-{{ suggestion.id }}">{{ suggestion.likes_count }}</span>
+                <span class="vote-separator">/</span>
+                <span class="vote-count dislikes-count" id="dislikes-{{ suggestion.id }}">{{ suggestion.dislikes_count }}</span>
+            </span>
+            <button class="vote-btn dislike-btn"
+                    hx-post="{% url 'api-suggestion-vote' suggestion.id %}"
+                    hx-vals='{"vote": -1}'
+                    hx-target="#suggestion-{{ suggestion.id }} .vote-stats"
+                    hx-swap="outerHTML"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                <i class="fa-solid fa-thumbs-down"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Информация об организации (если выбрана) -->
+    {% if suggestion.organization %}
+    <div class="mb-2 small">
+        <i class="fa-solid fa-building text-primary me-1"></i>
+        <span class="text-muted">{{ suggestion.organization.short_name }}</span>
+        {% if suggestion.organization.district %}
+            <span class="text-muted ms-2">
+                <i class="fa-solid fa-map-marker-alt"></i> {{ suggestion.organization.district.short_name }}
+            </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Текст предложения -->
+    <div class="suggestion-content mb-3">
+        {{ suggestion.content|safe }}
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="d-flex gap-3">
+        <button class="btn btn-sm btn-outline-primary"
+                onclick="toggleComments({{ suggestion.id }})">
+            <i class="fa-regular fa-comment me-1"></i>
+            Комментарии
+            <span class="comments-count-badge">{{ suggestion.comments.count }}</span>
+        </button>
+
+        {% if user.is_staff and not suggestion.is_best %}
+        <button class="btn btn-sm btn-outline-warning"
+                hx-post="{% url 'api-suggestion-mark-best' suggestion.id %}"
+                hx-confirm="Отметить это предложение как лучшее?"
+                hx-target="#suggestion-{{ suggestion.id }}"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            <i class="fa-regular fa-star me-1"></i>
+            Отметить лучшим
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Комментарии (изначально скрыты) -->
+    <div class="comments-section mt-3" id="comments-{{ suggestion.id }}" style="display: none;">
+        <div class="comments-list">
+            {% for comment in suggestion.comments.all %}
+                {% if not comment.parent %}  <!-- Показываем только корневые комментарии -->
+                    {% include 'questions/partials/comment_item.html' with comment=comment suggestion=suggestion %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Форма добавления нового комментария -->
+        <div class="add-comment mt-3">
+            <form hx-post="{% url 'api-suggestion-comments' suggestion.id %}"
+                hx-target="#comments-{{ suggestion.id }} .comments-list"
+                hx-swap="beforeend"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-on::after-request="handleCommentResponse(this, {{ suggestion.id }}) (event)">
+                {% csrf_token %}
+                <input type="hidden" name="parent" value="">
+
+                <div class="mb-2">
+                    <input type="text"
+                        name="author_name"
+                        class="form-control"
+                        placeholder="Ваше имя"
+                        required>
+                </div>
+
+                <div class="mb-2">
+                    <textarea name="content"
+                            class="form-control"
+                            rows="2"
+                            placeholder="Ваш комментарий..."
+                            required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fa-regular fa-paper-plane me-1"></i>
+                    Отправить комментарий
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

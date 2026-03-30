@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+# Создаем директории если их нет
+mkdir -p /App/staticfiles /App/mediafiles
+
+# Собираем статику
+python manage.py collectstatic --noinput --clear
+
+# Применяем миграции
+python manage.py migrate --noinput
+
+# Проверяем, что база данных готова
+echo "Database is ready"
+
+# Запускаем gunicorn с оптимизированными настройками
+exec gunicorn witwall.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers 4 \
+    --worker-class sync \
+    --timeout 120 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    --worker-tmp-dir /dev/shm

@@ -1,0 +1,93 @@
+{% load static %}
+<div class="comment {% if comment.parent %}reply{% endif %} {% if comment.is_deleted %}deleted{% endif %}"
+     id="comment-{{ comment.id }}"
+     data-parent-id="{{ comment.parent.id|default:'' }}"
+     data-depth="{{ comment.get_depth|default:0 }}">
+
+    {% if comment.is_deleted %}
+        <div class="deleted-message">
+            <i class="fa-solid fa-ban me-1"></i>
+            Комментарий удален модератором
+            {% if user.is_staff and comment.deleted_by %}
+                <small>({{ comment.deleted_by.username }} {{ comment.deleted_at|date:"d.m.Y H:i" }})</small>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="comment-header">
+            <span class="comment-author">{{ comment.author_name }}</span>
+            <span class="comment-date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+
+            <!-- Индикатор, что это ответ -->
+            {% if comment.parent %}
+                <span class="reply-to-badge">
+                    <i class="fa-solid fa-reply me-1"></i>
+                    в ответ <span class="reply-to-author">{{ comment.parent.author_name }}</span>
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="comment-content">
+            {{ comment.content|linebreaks }}
+        </div>
+
+        <!-- Кнопка ответа -->
+        <button class="btn btn-sm btn-link reply-btn"
+                onclick="showReplyForm({{ comment.id }}, '{{ comment.author_name|escapejs }}')">
+            <i class="fa-regular fa-comment me-1"></i>Ответить
+        </button>
+
+        <!-- Форма ответа -->
+        <div class="reply-form-container" id="reply-form-{{ comment.id }}" style="display: none;">
+            <div class="reply-indicator">
+                <i class="fa-solid fa-reply me-1"></i>
+                Ответ для <strong>{{ comment.author_name }}</strong>
+            </div>
+            <form class="reply-form"
+                hx-post="{% url 'api-suggestion-comments' suggestion.id %}"
+                hx-target="#comment-{{ comment.id }} .comment-replies"
+                hx-swap="beforeend"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-on::after-request="handleCommentResponse(this, {{ suggestion.id }}, {{ comment.id }}) (event)">
+                {% csrf_token %}
+                <input type="hidden" name="parent" value="{{ comment.id }}">
+
+                <div class="mb-2">
+                    <input type="text"
+                        name="author_name"
+                        class="form-control form-control-sm"
+                        placeholder="Ваше имя"
+                        required>
+                </div>
+
+                <div class="mb-2">
+                    <textarea name="content"
+                            class="form-control form-control-sm"
+                            rows="2"
+                            placeholder="Ваш ответ..."
+                            required></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fa-regular fa-paper-plane me-1"></i>Отправить
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="hideReplyForm({{ comment.id }})">
+                        Отмена
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Вложенные комментарии (ответы) -->
+        {% if comment.replies.all %}
+            <div class="comment-replies">
+                {% for reply in comment.replies.all %}
+                    {% include 'questions/partials/comment_item.html' with comment=reply suggestion=suggestion %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="comment-replies" style="display: none;"></div>  <!-- Пустой контейнер для будущих ответов -->
+        {% endif %}
+    {% endif %}
+</div>

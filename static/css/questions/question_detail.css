@@ -1,0 +1,531 @@
+/* Заголовок вопроса */
+.question-header {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+}
+
+/* Тело вопроса */
+.question-body {
+    background: white;
+    padding: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+/* Карточка предложения */
+.suggestion-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.suggestion-card.best {
+    border: 2px solid gold;
+    background: linear-gradient(45deg, #fff, #fff9e6);
+}
+
+/* Бейдж лучшего предложения */
+.best-badge {
+    background: gold;
+    color: #000;
+    padding: 0.25rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+/* Кнопки голосования */
+.vote-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.vote-btn {
+    border: 1px solid #dee2e6;
+    background: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.vote-btn:hover {
+    background: #f8f9fa;
+    transform: scale(1.05);
+}
+
+.vote-btn.liked {
+    background: var(--bs-primary);
+    color: white;
+    border-color: var(--bs-primary);
+}
+
+.vote-btn.disliked {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+/* Статистика голосов */
+.vote-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: bold;
+    min-width: 3rem;
+    justify-content: center;
+}
+
+.vote-count {
+    font-size: 1rem;
+    font-weight: bold;
+    min-width: 2rem;
+    text-align: center;
+}
+
+.likes-count {
+    color: var(--bs-primary);
+}
+
+.dislikes-count {
+    color: #dc3545;
+}
+
+.vote-separator {
+    color: #dee2e6;
+    font-weight: normal;
+}
+
+/* Бейджи статусов */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-new { background: #e2e3e5; color: #383d41; }
+.status-processing { background: #fff3cd; color: #856404; }
+.status-has_suggestions { background: #cce5ff; color: #004085; }
+.status-has_best { background: #d4edda; color: #155724; }
+.status-closed { background: #f8d7da; color: #721c24; }
+
+.processing-badge {
+    background: var(--bs-warning);
+    color: #000;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+
+/* Информация об организации */
+.organization-info {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+/* HTMX анимации */
+.htmx-fade {
+    transition: opacity 0.3s ease-in-out;
+}
+.htmx-fade.htmx-swapping {
+    opacity: 0;
+}
+
+/* ========== СТИЛИ ДЛЯ КОММЕНТАРИЕВ ========== */
+
+/* Секция комментариев */
+.comments-section {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+/* Список комментариев */
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Базовый стиль комментария */
+.comment {
+    position: relative;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.comment:hover {
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Ответы на комментарии - минимальный отступ */
+.comment.reply {
+    margin-left: 0.5rem;
+    background-color: #f1f3f5;
+    border-left-color: var(--bs-primary);
+}
+
+/* Заголовок комментария */
+.comment-header {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Автор комментария */
+.comment-author {
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+/* Дата комментария */
+.comment-date {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Бейдж "в ответ" */
+.reply-to-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    margin-left: 0.25rem;
+}
+
+.reply-to-badge i {
+    font-size: 0.6rem;
+    color: var(--bs-primary);
+}
+
+.reply-to-author {
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+/* Содержание комментария */
+.comment-content {
+    margin-top: 0.25rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.comment-content p {
+    margin-bottom: 0.25rem;
+}
+
+.comment-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Кнопка ответа */
+.reply-btn {
+    padding: 0.2rem 0.75rem;
+    border-radius: 16px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+    color: var(--bs-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.reply-btn:hover {
+    background-color: #e7f1ff;
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+}
+
+/* Контейнер для формы ответа */
+.reply-form-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    animation: slideDown 0.3s ease;
+}
+
+/* Анимация появления формы */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Индикатор ответа в форме */
+.reply-indicator {
+    background-color: #e7f1ff;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    border-left: 3px solid var(--bs-primary);
+}
+
+.reply-indicator i {
+    color: var(--bs-primary);
+}
+
+/* Поля ввода в форме ответа */
+.reply-form-container input,
+.reply-form-container textarea {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.5rem;
+    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reply-form-container input:focus,
+.reply-form-container textarea:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+/* Кнопки в форме ответа */
+.reply-form-container .btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Форма добавления нового комментария (корневого) */
+.add-comment {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.add-comment input,
+.add-comment textarea {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.5rem;
+    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-comment input:focus,
+.add-comment textarea:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+.add-comment textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Удаленный комментарий */
+.comment.deleted {
+    background-color: #f8d7da;
+    border-left: 3px solid #dc3545;
+    opacity: 0.8;
+}
+
+.comment.deleted .comment-content {
+    color: #721c24;
+    font-style: italic;
+}
+
+.deleted-message {
+    color: #721c24;
+    font-style: italic;
+    padding: 0.5rem;
+    background-color: #f8d7da;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.deleted-message small {
+    color: #856404;
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Вложенные комментарии - уменьшенные отступы */
+.comment-replies {
+    margin-left: 0.75rem;
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid #dee2e6;
+}
+
+.comment-replies .comment {
+    margin-left: 0;
+    border-left-color: #cce5ff;
+    margin-bottom: 0.5rem;
+}
+
+.comment-replies .comment:last-child {
+    margin-bottom: 0;
+}
+
+/* Счетчик комментариев */
+.comments-count-badge {
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+}
+
+/* Индикатор загрузки */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--bs-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    max-width: 400px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ========== МЕДИА-ЗАПРОСЫ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ========== */
+@media (max-width: 768px) {
+    .question-header {
+        padding: 1.5rem;
+    }
+
+    .question-body {
+        padding: 1.5rem;
+    }
+
+    .suggestion-card {
+        padding: 1rem;
+    }
+
+    .comment.reply {
+        margin-left: 0.25rem;
+    }
+
+    .comment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .reply-to-badge {
+        margin-left: 0;
+    }
+
+    .vote-buttons {
+        flex-wrap: wrap;
+    }
+
+    .vote-btn {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .comment-replies {
+        margin-left: 0.5rem;
+        padding-left: 0.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .question-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .status-badge {
+        align-self: flex-start;
+    }
+
+    .vote-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .comment {
+        padding: 0.75rem;
+    }
+
+    .comment.reply {
+        margin-left: 0.25rem;
+    }
+
+    .reply-form-container {
+        padding: 0.75rem;
+    }
+}

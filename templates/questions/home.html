@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">
+            <i class="fa-solid fa-question-circle me-3 text-primary"></i>
+            Актуальные вопросы
+        </h1>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Карточка для создания нового вопроса -->
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <a href="{% url 'ask_question' %}" class="text-decoration-none">
+            <div class="card h-100 border-2 border-dashed" style="border-style: dashed; min-height: 200px;">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <div class="display-1 text-primary mb-3">
+                        <i class="fa-solid fa-plus-circle"></i>
+                    </div>
+                    <h5 class="card-title text-center text-primary">Задать вопрос</h5>
+                    <p class="card-text text-center text-muted small">Нажмите, чтобы создать новый вопрос</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Существующие вопросы -->
+    {% for question in questions %}
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <a href="{% url 'question_detail' question.id %}" class="text-decoration-none">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body">
+                    <!-- Статус вопроса -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge {% if question.status == 'new' %}bg-secondary
+                                         {% elif question.status == 'processing' %}bg-warning text-dark
+                                         {% elif question.status == 'has_suggestions' %}bg-info
+                                         {% elif question.status == 'has_best' %}bg-success
+                                         {% elif question.status == 'closed' %}bg-danger
+                                         {% else %}bg-secondary{% endif %}">
+                            {{ question.get_status_display }}
+                        </span>
+                        <small class="text-muted">
+                            <i class="far fa-eye me-1"></i>{{ question.views_count }}
+                        </small>
+                    </div>
+
+                    <!-- Заголовок вопроса -->
+                    <h5 class="card-title text-dark mb-2">
+                        {{ question.title|truncatechars:60 }}
+                    </h5>
+
+                    <!-- Краткое содержание -->
+                    <p class="card-text text-muted small mb-3">
+                        {{ question.content|striptags|truncatechars:100 }}
+                    </p>
+
+                    <!-- Информация об организации -->
+                    {% if question.organization %}
+                    <div class="mb-2">
+                        <small class="text-muted d-block">
+                            <i class="fa-solid fa-building me-1"></i>
+                            {{ question.organization.short_name|truncatechars:30 }}
+                        </small>
+                        {% if question.organization.district %}
+                        <small class="text-muted d-block">
+                            <i class="fa-solid fa-map-marker-alt me-1"></i>
+                            {{ question.organization.district.short_name }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Автор и дата -->
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                        <small class="text-muted">
+                            <i class="fa-solid fa-user me-1"></i>{{ question.author_name|truncatechars:15 }}
+                        </small>
+                        <small class="text-muted">
+                            <i class="far fa-calendar me-1"></i>{{ question.created_at|date:"d.m.Y" }}
+                        </small>
+                    </div>
+
+                    <!-- Статистика предложений -->
+                    <div class="mt-2 d-flex gap-3">
+                        <small class="text-muted">
+                            <i class="fa-solid fa-lightbulb me-1"></i>{{ question.suggestions_count }}
+                        </small>
+                        {% comment %} <small class="text-muted">
+                            <i class="fa-solid fa-comment me-1"></i>{{ question.comments.count }}
+                        </small> {% endcomment %}
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fa-solid fa-info-circle me-2"></i>
+            Пока нет вопросов. Будьте первым, кто задаст вопрос!
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Пагинация -->
+{% if page_obj.has_other_pages %}
+<div class="row mt-5">
+    <div class="col-12">
+        <nav aria-label="Навигация по страницам">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" aria-label="Первая">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Предыдущая">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Следующая">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Последняя">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+<!-- Alpine.js для интерактивности -->
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('questions', () => ({
+            hoveredCard: null,
+        }))
+    })
+</script>
+
+<!-- Дополнительные стили -->
+<style>
+    .hover-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        min-height: 280px;
+    }
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 1.5rem rgba(0,0,0,.15)!important;
+        cursor: pointer;
+    }
+    .border-dashed {
+        border: 2px dashed #dee2e6 !important;
+        transition: all 0.2s;
+    }
+    .border-dashed:hover {
+        border-color: var(--bs-primary) !important;
+        background-color: rgba(var(--bs-primary-rgb), 0.02);
+    }
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .badge {
+        padding: 0.5em 0.8em;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+    }
+    @media (max-width: 576px) {
+        .display-5 {
+            font-size: 1.8rem;
+        }
+        .hover-card {
+            min-height: 240px;
+        }
+    }
+</style>
+{% endblock %}

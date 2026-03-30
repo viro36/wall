@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block title %}{{ question.title }} - Сайт вопросов и предложений{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/questions/question_detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/questions/suggestion_form.css' %}">
+<link rel="stylesheet" href="{% static 'css/organizations/get_organization.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Вопрос -->
+    <div class="question-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <h1 class="h2 mb-0">{{ question.title }}</h1>
+            <span class="status-badge status-{{ question.status }}">
+                {{ question.get_status_display }}
+                {% if question.status == 'processing' %}
+                    <span class="processing-badge">
+                        <i class="fa-solid fa-gear"></i> В обработке
+                    </span>
+                {% elif question.status == 'has_best' %}
+                    <span class="processing-badge" style="background: #28a745; color: white;">
+                        <i class="fa-solid fa-crown"></i> Решено
+                    </span>
+                {% endif %}
+            </span>
+        </div>
+        <p class="mb-0 mt-2 opacity-75">
+            <i class="fa-solid fa-user me-2"></i>{{ question.author_name }}
+            <i class="fa-solid fa-calendar ms-3 me-2"></i>{{ question.created_at|date:"d.m.Y H:i" }}
+            <i class="fa-solid fa-eye ms-3 me-2"></i>{{ question.views_count }}
+        </p>
+    </div>
+
+    <div class="question-body">
+        <!-- Информация об организации (если выбрана) -->
+        {% if question.organization %}
+        <div class="organization-info">
+            <div class="d-flex align-items-center mb-2">
+                <i class="fa-solid fa-building me-2 text-primary"></i>
+                <h5 class="mb-0">{{ question.organization.short_name }}</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <small class="text-muted d-block">
+                        <i class="fa-solid fa-map-marker-alt me-1"></i>
+                        {{ question.organization.district.short_name }}
+                    </small>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">
+                        <i class="fa-solid fa-tag me-1"></i>
+                        {{ question.organization.organization_type.name }}
+                    </small>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">
+                        <i class="fa-solid fa-map-pin me-1"></i>
+                        {{ question.organization.address_raw }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Текст вопроса -->
+        <div class="question-content mb-4">
+            {{ question.content|safe }}
+        </div>
+
+        <!-- Информация о статусе обработки (видят все) -->
+        {% if question.status == 'processing' %}
+        <div class="mt-2">
+            <span class="badge bg-warning text-dark p-2">
+                <i class="fa-solid fa-check me-1"></i>Вопрос в обработке
+            </span>
+            {% if question.processed_at %}
+                <small class="text-muted ms-2">
+                    <i class="fa-regular fa-calendar me-1"></i>{{ question.processed_at|date:"d.m.Y H:i" }}
+                </small>
+            {% endif %}
+
+            <!-- Кто взял - видят только админы -->
+            {% if user.is_staff and question.processed_by %}
+                <small class="text-muted ms-3">
+                    <i class="fa-regular fa-user me-1"></i>{{ question.processed_by.username }}
+                </small>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Кнопка для админов (только если нет лучшего предложения) -->
+        {% if user.is_staff and question.status != 'has_best' %}
+        <div class="mt-3 pt-3 border-top">
+            <div id="processing-container" class="htmx-fade">
+                <form style="display: inline;">
+                    {% csrf_token %}
+                    <button class="btn btn-warning"
+                            hx-post="{% url 'question-take-in-processing' question.id %}"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                            hx-target="#processing-container"
+                            hx-swap="outerHTML">
+                        {% if question.status == 'processing' %}
+                            <i class="fa-regular fa-circle-check me-2"></i>Уже в обработке
+                        {% else %}
+                            <i class="fa-solid fa-play me-2"></i>Взять в обработку
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Информационное сообщение для всех пользователей, если вопрос решен -->
+    {% if question.status == 'has_best' %}
+    <div class="alert alert-success mb-4">
+        <div class="d-flex align-items-center">
+            <div class="me-3">
+                <i class="fa-solid fa-crown fa-2x text-warning"></i>
+            </div>
+            <div>
+                <h5 class="alert-heading mb-1">✓ Вопрос решен</h5>
+                <p class="mb-0">Лучшее предложение выбрано. Новые предложения больше не принимаются.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Предложения -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h4 mb-0">
+            <i class="fa-solid fa-lightbulb me-2 text-primary"></i>
+            Предложения ({{ question.suggestions.count }})
+        </h3>
+
+        <!-- Кнопка добавления предложения - показываем только если нет лучшего предложения -->
+        {% if question.status != 'has_best' and question.status != 'closed' %}
+        <button class="btn btn-primary"
+                data-bs-toggle="collapse"
+                data-bs-target="#addSuggestionForm"
+                aria-expanded="false">
+            <i class="fa-solid fa-plus me-2"></i>Добавить предложение
+        </button>
+        {% elif question.status == 'has_best' %}
+        <span class="badge bg-success p-2">
+            <i class="fa-solid fa-check-circle me-1"></i>
+            Прием предложений закрыт
+        </span>
+        {% elif question.status == 'closed' %}
+        <span class="badge bg-secondary p-2">
+            <i class="fa-solid fa-lock me-1"></i>
+            Вопрос закрыт
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- Форма добавления предложения - показываем только если можно добавлять -->
+    {% if question.status != 'has_best' and question.status != 'closed' %}
+    <div class="collapse mb-4" id="addSuggestionForm">
+        {% include 'questions/partials/suggestion_form.html' with form=suggestion_form %}
+    </div>
+    {% endif %}
+
+    <!-- Список предложений -->
+    <div id="suggestions-list">
+        {% for suggestion in question.suggestions.all %}
+            {% include 'questions/partials/suggestion_item.html' with suggestion=suggestion %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/questions/question_detail.js' %}"></script>
+<script src="{% static 'js/questions/suggestion_form.js' %}"></script>
+<script src="{% static 'js/organizations/get_organization.js' %}"></script>
+{% endblock %}

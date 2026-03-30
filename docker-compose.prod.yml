@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: kartoza/postgis:18-3.6
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASS=${POSTGRES_PASS}
+      - POSTGRES_DBNAME=${POSTGRES_DBNAME}
+    restart: always
+    networks:
+      - witwall
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DBNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:8.2.5-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - witwall
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  witwall:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile.prod
+    command: /start-prod
+    user: "appuser:appgroup"
+    volumes:
+      - static_volume:/App/staticfiles
+      - media_volume:/App/mediafiles
+    expose:
+      - "8000"
+    env_file:
+      - .env.prod
+    environment:
+      - DJANGO_SUPERUSER_CREATE=false
+    restart: unless-stopped
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - witwall
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    restart: unless-stopped
+    depends_on:
+      - witwall
+    volumes:
+      - static_volume:/App/staticfiles
+      - media_volume:/App/mediafiles
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - witwall
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile.prod
+    command: /start-celeryworker
+    user: "celeryuser:celerygroup"
+    volumes:
+      - static_volume:/App/staticfiles
+      - media_volume:/App/mediafiles
+    env_file:
+      - .env.prod
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - witwall
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile.prod
+    command: celery -A witwall beat --loglevel=info
+    user: "celeryuser:celerygroup"
+    volumes:
+      - static_volume:/App/staticfiles
+      - media_volume:/App/mediafiles
+    env_file:
+      - .env.prod
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
+    networks:
+      - witwall
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile.prod
+    command: /start-flower
+    user: "appuser:appgroup"
+    volumes:
+      - static_volume:/App/staticfiles
+      - media_volume:/App/mediafiles
+    env_file:
+      - .env.prod
+    ports:
+      - "5555:5555"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - witwall
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+networks:
+  witwall:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  redis_data:
