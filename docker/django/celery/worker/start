@@ -4,7 +4,7 @@ set -o errexit
 
 set -o nounset
 
-# watchmedo auto-restart -d witwall/ -p "*.py" -- celery -A witwall worker --loglevel=info
+# watchmedo auto-restart -d wall/ -p "*.py" -- celery -A wall worker --loglevel=info
 
 # Просто запускаем worker от celeryuser
-exec celery -A witwall worker --loglevel=info
+exec celery -A wall worker --loglevel=info

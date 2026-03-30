@@ -23,7 +23,7 @@ if not User.objects.filter(is_superuser=True).exists():
 mkdir -p /tmp/gunicorn
 chmod 755 /tmp/gunicorn
 
-exec gunicorn witwall.wsgi:application \
+exec gunicorn wall.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 4 \
     --worker-class sync \

@@ -6,7 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'witwall.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'wall.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

@@ -1,5 +1,5 @@
 services:
-  witwall:
+  wall:
     build:
       context: .
       dockerfile: ./docker/django/Dockerfile.dev
@@ -20,7 +20,7 @@ services:
       redis:
         condition: service_started
     networks:
-      - witwall
+      - wall
 
   postgres-db:
     image: kartoza/postgis:18-3.6
@@ -34,7 +34,7 @@ services:
       - POSTGRES_DBNAME=${POSTGRES_DBNAME}
     restart: "on-failure"
     networks:
-      - witwall
+      - wall
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DBNAME}"]
       interval: 5s
@@ -45,7 +45,7 @@ services:
   nginx:
     restart: always
     depends_on:
-      - witwall
+      - wall
     volumes:
       - static_volume:/App/staticfiles
       - media_volume:/App/mediafiles
@@ -55,12 +55,12 @@ services:
     ports:
       - 8080:80
     networks:
-      - witwall
+      - wall
 
   redis:
     image: redis:8.2.5-alpine
     networks:
-        - witwall
+        - wall
 
   celery_worker:
     build:
@@ -71,8 +71,8 @@ services:
     develop:
       watch:
         - action: sync+restart
-          path: ./witwall
-          target: /App/witwall
+          path: ./wall
+          target: /App/wall
     volumes:
         - .:/App
         - static_volume:/App/staticfiles
@@ -84,11 +84,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      witwall:
+      wall:
         condition: service_started
     restart: "on-failure"
     networks:
-        - witwall
+        - wall
 
   # flower in http://0.0.0.0:5557/
   flower:
@@ -115,14 +115,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      witwall:
+      wall:
         condition: service_started
     networks:
-        - witwall
+        - wall
 
 
 networks:
-  witwall:
+  wall:
     driver: bridge
 
 volumes:

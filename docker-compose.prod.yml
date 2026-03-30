@@ -13,7 +13,7 @@ services:
       - POSTGRES_DBNAME=${POSTGRES_DBNAME}
     restart: always
     networks:
-      - witwall
+      - wall
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DBNAME}"]
       interval: 10s
@@ -32,7 +32,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - witwall
+      - wall
     restart: always
     logging:
       driver: "json-file"
@@ -40,7 +40,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  witwall:
+  wall:
     build:
       context: .
       dockerfile: ./docker/django/Dockerfile.prod
@@ -62,7 +62,7 @@ services:
       redis:
         condition: service_started
     networks:
-      - witwall
+      - wall
     logging:
       driver: "json-file"
       options:
@@ -72,7 +72,7 @@ services:
   nginx:
     restart: unless-stopped
     depends_on:
-      - witwall
+      - wall
     volumes:
       - static_volume:/App/staticfiles
       - media_volume:/App/mediafiles
@@ -83,7 +83,7 @@ services:
       - "80:80"
       - "443:443"
     networks:
-      - witwall
+      - wall
     logging:
       driver: "json-file"
       options:
@@ -108,7 +108,7 @@ services:
         condition: service_started
     restart: unless-stopped
     networks:
-      - witwall
+      - wall
     logging:
       driver: "json-file"
       options:
@@ -119,7 +119,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/django/Dockerfile.prod
-    command: celery -A witwall beat --loglevel=info
+    command: celery -A wall beat --loglevel=info
     user: "celeryuser:celerygroup"
     volumes:
       - static_volume:/App/staticfiles
@@ -133,7 +133,7 @@ services:
         condition: service_started
     restart: on-failure
     networks:
-      - witwall
+      - wall
     logging:
       driver: "json-file"
       options:
@@ -165,7 +165,7 @@ services:
         condition: service_started
     restart: unless-stopped
     networks:
-      - witwall
+      - wall
     logging:
       driver: "json-file"
       options:
@@ -174,7 +174,7 @@ services:
 
 
 networks:
-  witwall:
+  wall:
     driver: bridge
 
 volumes:

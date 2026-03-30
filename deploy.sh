@@ -17,10 +17,10 @@ docker-compose -f docker-compose.prod.yml build
 docker-compose -f docker-compose.prod.yml up -d
 
 # Применяем миграции
-docker-compose -f docker-compose.prod.yml exec witwall python manage.py migrate --noinput
+docker-compose -f docker-compose.prod.yml exec wall python manage.py migrate --noinput
 
 # Собираем статику
-docker-compose -f docker-compose.prod.yml exec witwall python manage.py collectstatic --noinput
+docker-compose -f docker-compose.prod.yml exec wall python manage.py collectstatic --noinput
 
 # Проверяем статус
 docker-compose -f docker-compose.prod.yml ps
