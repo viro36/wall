@@ -13,7 +13,7 @@ services:
       - POSTGRES_DBNAME=${POSTGRES_DBNAME}
     restart: always
     networks:
-      - wall
+      - witwall
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DBNAME}"]
       interval: 10s
@@ -28,11 +28,11 @@ services:
 
   redis:
     image: redis:8.2.5-alpine
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     networks:
-      - wall
+      - witwall
     restart: always
     logging:
       driver: "json-file"
@@ -40,7 +40,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  wall:
+  witwall:
     build:
       context: .
       dockerfile: ./docker/django/Dockerfile.prod
@@ -62,7 +62,7 @@ services:
       redis:
         condition: service_started
     networks:
-      - wall
+      - witwall
     logging:
       driver: "json-file"
       options:
@@ -72,7 +72,7 @@ services:
   nginx:
     restart: unless-stopped
     depends_on:
-      - wall
+      - witwall
     volumes:
       - static_volume:/App/staticfiles
       - media_volume:/App/mediafiles
@@ -83,7 +83,7 @@ services:
       - "80:80"
       - "443:443"
     networks:
-      - wall
+      - witwall
     logging:
       driver: "json-file"
       options:
@@ -108,7 +108,7 @@ services:
         condition: service_started
     restart: unless-stopped
     networks:
-      - wall
+      - witwall
     logging:
       driver: "json-file"
       options:
@@ -119,11 +119,12 @@ services:
     build:
       context: .
       dockerfile: ./docker/django/Dockerfile.prod
-    command: celery -A wall beat --loglevel=info
+    command: celery -A witwall beat --loglevel=info
     user: "celeryuser:celerygroup"
     volumes:
       - static_volume:/App/staticfiles
       - media_volume:/App/mediafiles
+      - ./celerybeat-schedule:/tmp/celerybeat-schedule
     env_file:
       - .env.prod
     depends_on:
@@ -133,7 +134,7 @@ services:
         condition: service_started
     restart: on-failure
     networks:
-      - wall
+      - witwall
     logging:
       driver: "json-file"
       options:
@@ -165,7 +166,7 @@ services:
         condition: service_started
     restart: unless-stopped
     networks:
-      - wall
+      - witwall
     logging:
       driver: "json-file"
       options:
@@ -174,7 +175,7 @@ services:
 
 
 networks:
-  wall:
+  witwall:
     driver: bridge
 
 volumes:

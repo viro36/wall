@@ -1,20 +1,43 @@
 #!/bin/bash
 set -e
 
+echo "Starting production server..."
+
+# Функция ожидания сервиса
+wait_for_service() {
+    local host=$1
+    local port=$2
+    local service=$3
+    
+    echo "Waiting for $service at $host:$port..."
+    while ! nc -z $host $port; do
+        sleep 1
+    done
+    echo "$service is ready!"
+}
+
+# Ждем готовности PostgreSQL
+wait_for_service postgres-db 5432 "PostgreSQL"
+
+# Ждем готовности Redis
+wait_for_service redis 6379 "Redis"
+
 # Создаем директории если их нет
 mkdir -p /App/staticfiles /App/mediafiles
+chown -R appuser:appgroup /App/staticfiles /App/mediafiles
 
 # Собираем статику
+echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
 # Применяем миграции
+echo "Running migrations..."
 python manage.py migrate --noinput
 
-# Проверяем, что база данных готова
 echo "Database is ready"
 
 # Запускаем gunicorn с оптимизированными настройками
-exec gunicorn wall.wsgi:application \
+exec gunicorn witwall.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 4 \
     --worker-class sync \
