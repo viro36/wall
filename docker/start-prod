@@ -8,7 +8,7 @@ wait_for_service() {
     local host=$1
     local port=$2
     local service=$3
-    
+
     echo "Waiting for $service at $host:$port..."
     while ! nc -z $host $port; do
         sleep 1
@@ -24,8 +24,6 @@ wait_for_service redis 6379 "Redis"
 
 # Создаем директории если их нет
 mkdir -p /App/staticfiles /App/mediafiles
-
-chmod 777 /App/staticfiles /App/mediafiles
 
 # Собираем статику
 echo "Collecting static files..."
