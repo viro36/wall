@@ -119,12 +119,13 @@ services:
     build:
       context: .
       dockerfile: ./docker/django/Dockerfile.prod
-    command: celery -A wall beat --loglevel=info
+    command: celery -A wall beat -l info --schedule=/App/celery_data/celerybeat-schedule
+    working_dir: /App
     user: "celeryuser:celerygroup"
     volumes:
       - static_volume:/App/staticfiles
       - media_volume:/App/mediafiles
-      - ./celerybeat-schedule:/tmp/celerybeat-schedule
+      - ./celery_data:/App/celery_data
     env_file:
       - .env.prod
     depends_on:
@@ -135,11 +136,6 @@ services:
     restart: on-failure
     networks:
       - wall
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   flower:
     build:

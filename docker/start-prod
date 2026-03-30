@@ -24,7 +24,8 @@ wait_for_service redis 6379 "Redis"
 
 # Создаем директории если их нет
 mkdir -p /App/staticfiles /App/mediafiles
-chown -R appuser:appgroup /App/staticfiles /App/mediafiles
+
+chmod 777 /App/staticfiles /App/mediafiles
 
 # Собираем статику
 echo "Collecting static files..."
