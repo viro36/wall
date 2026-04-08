@@ -160,9 +160,9 @@ $(BACKUP_DIR):
 # Бэкап базы данных
 backup: $(BACKUP_DIR)
 	@echo "=== Создание бэкапа БД ==="
-	@docker-compose -f $(COMPOSE_FILE) exec -T postgres-db pg_dump -U ${POSTGRES_USER} ${POSTGRES_DBNAME} > $(BACKUP_DIR)/backup_$$(date +%Y%m%d_%H%M%S).sql 2>/dev/null || \
-	(echo "Переменные не найдены, использую .env.prod" && \
-	 docker-compose -f $(COMPOSE_FILE) exec -T postgres-db pg_dump -U $$(grep POSTGRES_USER .env.prod | cut -d '=' -f2) $$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2) > $(BACKUP_DIR)/backup_$$(date +%Y%m%d_%H%M%S).sql)
+	@POSTGRES_USER=$$(grep POSTGRES_USER .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	POSTGRES_DBNAME=$$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	docker-compose -f $(COMPOSE_FILE) exec -T postgres-db pg_dump -U $$POSTGRES_USER $$POSTGRES_DBNAME > $(BACKUP_DIR)/backup_$$(date +%Y%m%d_%H%M%S).sql
 	@echo "Бэкап создан в $(BACKUP_DIR)"
 
 # Восстановление из бэкапа
