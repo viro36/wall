@@ -185,7 +185,7 @@ restore:
 		POSTGRES_USER=$$(grep POSTGRES_USER .env.prod | cut -d '=' -f2 | tr -d '\r'); \
 		POSTGRES_DBNAME=$$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2 | tr -d '\r'); \
 		POSTGRES_PASS=$$(grep POSTGRES_PASS .env.prod | cut -d '=' -f2 | tr -d '\r'); \
-		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db bash -c "PGPASSWORD=$$POSTGRES_PASS psql -U $$POSTGRES_USER -d $$POSTGRES_DBNAME" < $(BACKUP_DIR)/$$filename; \
+		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db bash -c "PGPASSWORD=$$POSTGRES_PASS psql -h localhost -U $$POSTGRES_USER -d $$POSTGRES_DBNAME" < $(BACKUP_DIR)/$$filename; \
 		echo "База данных восстановлена"; \
 	else \
 		echo "Файл $$filename не найден"; \
