@@ -112,20 +112,105 @@ bash:
 load_districts:
 	docker-compose exec wall python manage.py load_districts
 
+load_district-p:
+	docker-compose -f docker-compose.prod.yml exec wall python manage.py load_districts
+
 load_orgs:
 	docker-compose exec wall python manage.py import_orgs apps/organizations/fixtures/orgs.csv
+
+load_orgs-p:
+	docker-compose -f docker-compose.prod.yml exec wall python manage.py import_orgs apps/organizations/fixtures/orgs.csv
 
 # Обновить все организации, которые не обновлялись 30 дней
 dadata_30:
 	docker-compose exec wall python manage.py update_organizations_from_dadata --days 30
 
+dadata_30-p:
+	docker-compose -f docker-compose.prod.yml exec wall python manage.py update_organizations_from_dadata --days 30
+
 # Обновить все организации
 dadata_all:
 	docker-compose exec wall python manage.py update_organizations_from_dadata --all
+
+dadata_all-p:
+	docker-compose -f docker-compose.prod.yml exec wall python manage.py update_organizations_from_dadata --all
 
 # Обновить все организации с задержкой 0.5 сек (без лимита)
 dadata_delay:
 	docker-compose exec wall python manage.py update_organizations_from_dadata --all --delay 0.5
 
+dadata_delay-p:
+	docker-compose -f docker-compose.prod.yml exec wall python manage.py update_organizations_from_dadata --all --delay 0.5
+
 # Обновить конкретную организацию
 # python manage.py update_organizations_from_dadata --inn 3601234567
+
+# ============================================
+# ПРОДАКШЕН КОМАНДЫ
+# ============================================
+
+# Переменные
+COMPOSE_FILE = docker-compose.prod.yml
+BACKUP_DIR = ./backups
+
+# Создание директории для бэкапов
+$(BACKUP_DIR):
+	mkdir -p $(BACKUP_DIR)
+
+# Бэкап базы данных
+backup: $(BACKUP_DIR)
+	@echo "=== Создание бэкапа БД ==="
+	@docker-compose -f $(COMPOSE_FILE) exec -T postgres-db pg_dump -U ${POSTGRES_USER} ${POSTGRES_DBNAME} > $(BACKUP_DIR)/backup_$$(date +%Y%m%d_%H%M%S).sql 2>/dev/null || \
+	(echo "Переменные не найдены, использую .env.prod" && \
+	 docker-compose -f $(COMPOSE_FILE) exec -T postgres-db pg_dump -U $$(grep POSTGRES_USER .env.prod | cut -d '=' -f2) $$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2) > $(BACKUP_DIR)/backup_$$(date +%Y%m%d_%H%M%S).sql)
+	@echo "Бэкап создан в $(BACKUP_DIR)"
+
+# Восстановление из бэкапа
+restore:
+	@echo "=== Восстановление БД из бэкапа ==="
+	@echo "Доступные бэкапы:"
+	@ls -1 $(BACKUP_DIR)/backup_*.sql 2>/dev/null || echo "❌ Нет бэкапов"
+	@read -p "Введите имя файла бэкапа (например, backup_20241201_120000.sql): " filename; \
+	if [ -f "$(BACKUP_DIR)/$$filename" ]; then \
+		echo "Восстанавливаем $$filename..."; \
+		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db psql -U ${POSTGRES_USER} -d ${POSTGRES_DBNAME} < $(BACKUP_DIR)/$$filename 2>/dev/null || \
+		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db psql -U $$(grep POSTGRES_USER .env.prod | cut -d '=' -f2) -d $$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2) < $(BACKUP_DIR)/$$filename; \
+		echo "База данных восстановлена"; \
+	else \
+		echo "❌ Файл $$filename не найден"; \
+	fi
+
+# Полная пересборка с сохранением данных
+rebuild: backup down build-p up-p migrate-p
+	@echo "=== Пересборка завершена ==="
+	@echo "Данные сохранены"
+	@echo "Контейнеры пересобраны"
+	@echo "Миграции применены"
+
+# Быстрая пересборка (без бэкапа, только код)
+rebuild-fast: down build-p up-p migrate-p
+	@echo "=== Быстрая пересборка завершена ==="
+
+# Миграции для продакшена
+migrate-p:
+	docker-compose -f $(COMPOSE_FILE) exec wall python manage.py migrate --noinput
+
+# Просмотр статуса
+status:
+	docker-compose -f $(COMPOSE_FILE) ps
+
+# Логи только celery
+logs-celery:
+	docker-compose -f $(COMPOSE_FILE) logs celery_worker celery_beat -f
+
+# Перезапустить только wall
+restart-wall:
+	docker-compose -f $(COMPOSE_FILE) restart wall
+
+# Войти в продакшен контейнер
+shell-p:
+	docker-compose -f $(COMPOSE_FILE) exec wall /bin/bash
+
+# Посмотреть логи продакшена
+logs-p:
+	docker-compose -f $(COMPOSE_FILE) logs -f

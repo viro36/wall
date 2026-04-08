@@ -8,6 +8,7 @@
 __pycache__
 .pytest_cache
 .coverage
+backups/
 
 # Node artifact files
 node_modules/
@@ -53,4 +54,3 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
-
