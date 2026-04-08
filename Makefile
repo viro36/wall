@@ -163,7 +163,8 @@ backup: $(BACKUP_DIR)
 	@POSTGRES_USER=$$(grep POSTGRES_USER .env.prod | cut -d '=' -f2 | tr -d '\r'); \
 	POSTGRES_DBNAME=$$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2 | tr -d '\r'); \
 	POSTGRES_PASS=$$(grep POSTGRES_PASS .env.prod | cut -d '=' -f2 | tr -d '\r'); \
-	docker-compose -f $(COMPOSE_FILE) exec -T postgres-db bash -c "PGPASSWORD=$$POSTGRES_PASS pg_dump -U $$POSTGRES_USER $$POSTGRES_DBNAME" > $(BACKUP_DIR)/backup_$$(date +%Y%m%d_%H%M%S).sql
+	POSTGRES_HOST=$$(grep POSTGRES_HOST .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	docker-compose -f $(COMPOSE_FILE) exec -T postgres-db bash -c "PGPASSWORD=$$POSTGRES_PASS pg_dump -h localhost -U $$POSTGRES_USER $$POSTGRES_DBNAME" > $(BACKUP_DIR)/backup_$$(date +%Y%m%d_%H%M%S).sql
 	@echo "Бэкап создан в $(BACKUP_DIR)"
 
 # Восстановление из бэкапа
