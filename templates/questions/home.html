@@ -7,13 +7,14 @@
     <div class="col-12">
         <h1 class="display-5 mb-4">
             <i class="fa-solid fa-question-circle me-3 text-primary"></i>
-            Актуальные вопросы
+            Предложения для реализации
         </h1>
     </div>
 </div>
 
 <div class="row g-4">
     <!-- Карточка для создания нового вопроса -->
+    {% if user.is_staff %}
     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
         <a href="{% url 'ask_question' %}" class="text-decoration-none">
             <div class="card h-100 border-2 border-dashed" style="border-style: dashed; min-height: 200px;">
@@ -27,6 +28,7 @@
             </div>
         </a>
     </div>
+    {% endif %}
 
     <!-- Существующие вопросы -->
     {% for question in questions %}

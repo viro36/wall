@@ -2,7 +2,7 @@
 {% load static %}
 {% load django_bootstrap5 %}
 
-{% block title %}{{ question.title }} - Сайт вопросов и предложений{% endblock %}
+{% block title %}{{ question.title }} - Акселератор технологических решений{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/questions/question_detail.css' %}">
@@ -145,7 +145,7 @@
                 data-bs-toggle="collapse"
                 data-bs-target="#addSuggestionForm"
                 aria-expanded="false">
-            <i class="fa-solid fa-plus me-2"></i>Добавить предложение
+            <i class="fa-solid fa-plus me-2"></i>Создать предложение для реализации
         </button>
         {% elif question.status == 'has_best' %}
         <span class="badge bg-success p-2">

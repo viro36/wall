@@ -215,8 +215,8 @@ DADATA_SECRET_KEY = env("DADATA_SECRET_KEY", default=None)
 
 JAZZMIN_SETTINGS = {
     # Название сайта
-    "site_title": "Сайт вопросов и предложений",
-    "site_header": "Сайт вопросов и предложений",
+    "site_title": "Акселератор технологических решений",
+    "site_header": "Акселератор технологических решений",
     "site_brand": "Образование",
     # Логотип (если есть)
     "site_logo": None,
