@@ -1,11 +1,14 @@
 import os
+import sys
 from celery import Celery
 from celery.schedules import crontab
 import logging
 
-logger = logging.getLogger(__name__)
-
+# Устанавливаем UTF-8
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wall.settings")
+os.environ["PYTHONIOENCODING"] = "utf-8"
+
+logger = logging.getLogger(__name__)
 
 app = Celery("wall")
 app.config_from_object("django.conf:settings", namespace="CELERY")
@@ -21,18 +24,31 @@ def debug_task(self):
 @app.task
 def update_organizations_from_dadata():
     """Задача для периодического обновления организаций из DaData"""
-    from django.core.management import call_command
+    import subprocess
 
     try:
-        # Выполняем команду без захвата вывода
-        call_command(
-            "update_organizations_from_dadata",
-            "--all",
-            "--delay",
-            "0.5",
+        # Запускаем команду через subprocess с правильной кодировкой
+        result = subprocess.run(
+            [
+                "python",
+                "manage.py",
+                "update_organizations_from_dadata",
+                "--all",
+                "--delay",
+                "0.5",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd="/App",
         )
-        logger.info("Organizations update completed successfully")
-        return "Update completed successfully"
+
+        if result.returncode == 0:
+            logger.info("Organizations update completed successfully")
+            return "Update completed successfully"
+        else:
+            logger.error(f"Error: {result.stderr[:500]}")
+            return f"Error: {result.stderr[:500]}"
 
     except Exception as e:
         logger.error(f"Error updating organizations: {str(e)}")
