@@ -153,6 +153,13 @@ dadata_delay-p:
 COMPOSE_FILE = docker-compose.prod.yml
 BACKUP_DIR = ./backups
 
+# Алиасы
+down: down-p
+up: up-p
+build: build-p
+logs: logs-p
+shell: shell-p
+
 # Создание директории для бэкапов
 $(BACKUP_DIR):
 	mkdir -p $(BACKUP_DIR)
@@ -171,26 +178,28 @@ backup: $(BACKUP_DIR)
 restore:
 	@echo "=== Восстановление БД из бэкапа ==="
 	@echo "Доступные бэкапы:"
-	@ls -1 $(BACKUP_DIR)/backup_*.sql 2>/dev/null || echo "❌ Нет бэкапов"
+	@ls -1 $(BACKUP_DIR)/backup_*.sql 2>/dev/null || echo "Нет бэкапов"
 	@read -p "Введите имя файла бэкапа (например, backup_20241201_120000.sql): " filename; \
 	if [ -f "$(BACKUP_DIR)/$$filename" ]; then \
 		echo "Восстанавливаем $$filename..."; \
-		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db psql -U ${POSTGRES_USER} -d ${POSTGRES_DBNAME} < $(BACKUP_DIR)/$$filename 2>/dev/null || \
-		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db psql -U $$(grep POSTGRES_USER .env.prod | cut -d '=' -f2) -d $$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2) < $(BACKUP_DIR)/$$filename; \
+		POSTGRES_USER=$$(grep POSTGRES_USER .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+		POSTGRES_DBNAME=$$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+		POSTGRES_PASS=$$(grep POSTGRES_PASS .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db bash -c "PGPASSWORD=$$POSTGRES_PASS psql -U $$POSTGRES_USER -d $$POSTGRES_DBNAME" < $(BACKUP_DIR)/$$filename; \
 		echo "База данных восстановлена"; \
 	else \
-		echo "❌ Файл $$filename не найден"; \
+		echo "Файл $$filename не найден"; \
 	fi
 
 # Полная пересборка с сохранением данных
-rebuild: backup down build-p up-p migrate-p
+rebuild: backup down-p build-p up-p migrate-p
 	@echo "=== Пересборка завершена ==="
 	@echo "Данные сохранены"
 	@echo "Контейнеры пересобраны"
 	@echo "Миграции применены"
 
 # Быстрая пересборка (без бэкапа, только код)
-rebuild-fast: down build-p up-p migrate-p
+rebuild-fast: down-p build-p up-p migrate-p
 	@echo "=== Быстрая пересборка завершена ==="
 
 # Миграции для продакшена
@@ -216,3 +225,15 @@ shell-p:
 # Посмотреть логи продакшена
 logs-p:
 	docker-compose -f $(COMPOSE_FILE) logs -f
+
+# Остановка продакшена
+down-p:
+	docker-compose -f $(COMPOSE_FILE) down
+
+# Запуск продакшена
+up-p:
+	docker-compose -f $(COMPOSE_FILE) up -d
+
+# Сборка продакшена
+build-p:
+	docker-compose -f $(COMPOSE_FILE) build
