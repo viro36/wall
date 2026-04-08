@@ -177,16 +177,28 @@ backup: $(BACKUP_DIR)
 # Восстановление из бэкапа
 restore:
 	@echo "=== Восстановление БД из бэкапа ==="
+	@echo "ВНИМАНИЕ: Текущие данные будут УДАЛЕНЫ и заменены данными из бэкапа!"
+	@read -p "Вы уверены? (y/N): " confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "Восстановление отменено"; \
+		exit 1; \
+	fi
+	@echo ""
 	@echo "Доступные бэкапы:"
-	@ls -1 $(BACKUP_DIR)/backup_*.sql 2>/dev/null || echo "Нет бэкапов"
+	@ls -1 $(BACKUP_DIR)/backup_*.sql 2>/dev/null || (echo "Нет бэкапов" && exit 1)
 	@read -p "Введите имя файла бэкапа (например, backup_20241201_120000.sql): " filename; \
 	if [ -f "$(BACKUP_DIR)/$$filename" ]; then \
 		echo "Восстанавливаем $$filename..."; \
 		POSTGRES_USER=$$(grep POSTGRES_USER .env.prod | cut -d '=' -f2 | tr -d '\r'); \
 		POSTGRES_DBNAME=$$(grep POSTGRES_DBNAME .env.prod | cut -d '=' -f2 | tr -d '\r'); \
 		POSTGRES_PASS=$$(grep POSTGRES_PASS .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+		echo "-> Очищаем базу данных..."; \
+		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db bash -c "PGPASSWORD=$$POSTGRES_PASS psql -h localhost -U $$POSTGRES_USER -d $$POSTGRES_DBNAME -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'" 2>/dev/null || true; \
+		echo "-> Восстанавливаем данные..."; \
 		docker-compose -f $(COMPOSE_FILE) exec -T postgres-db bash -c "PGPASSWORD=$$POSTGRES_PASS psql -h localhost -U $$POSTGRES_USER -d $$POSTGRES_DBNAME" < $(BACKUP_DIR)/$$filename; \
 		echo "База данных восстановлена"; \
+		echo "-> Применяем миграции..."; \
+		docker-compose -f $(COMPOSE_FILE) exec wall python manage.py migrate --noinput; \
 	else \
 		echo "Файл $$filename не найден"; \
 	fi
